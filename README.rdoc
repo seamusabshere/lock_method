@@ -1,0 +1,46 @@
+= lock_method
+
+It's like <tt>alias_method</tt>, but it's <tt>lock_method</tt>!
+
+== Example
+
+    require 'lock_method'
+    class Blog
+      # [...]
+      def get_latest_entries
+        sleep 5
+      end
+      # [...]
+      lock_method :get_latest_entries
+    end
+
+Then you can do
+
+    my_blog.get_latest_entries => it will start...
+    my_blog.get_latest_entries => this will raise LockMethod::Locked if you try to run it before the other call finishes
+
+Just in case, you can clear them
+
+    my_blog.clear_lock :get_latest_entries
+
+== Configuration (and supported cache clients)
+
+The default is to use filesystem lockfiles, usually in <tt>/tmp/lock_method/*</tt>.
+
+If you want to share locks among various machines, you can use a Memcached or Redis client:
+
+    LockMethod.config.client = Memcached.new '127.0.0.1:11211'
+
+or
+
+    LockMethod.config.client = Redis.new
+
+or this might even work...
+
+    LockMethod.config.client = Rails.cache
+
+See <tt>Config</tt> for the full list of supported caches.
+
+== Copyright
+
+Copyright 2011 Seamus Abshere

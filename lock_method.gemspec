@@ -6,16 +6,23 @@ Gem::Specification.new do |s|
   s.name        = "lock_method"
   s.version     = LockMethod::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["TODO: Write your name"]
-  s.email       = ["TODO: Write your email address"]
-  s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.authors     = ["Seamus Abshere"]
+  s.email       = ["seamus@abshere.net"]
+  s.homepage    = "https://github.com/seamusabshere/lock_method"
+  s.summary     = %q{Lets you lock methods (to memcached, redis, etc.) as though you had a lockfile for each one}
+  s.description = %q{Like alias_method, but it's lock_method!}
 
   s.rubyforge_project = "lock_method"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+  
+  s.add_development_dependency 'test-unit'
+  s.add_development_dependency 'memcached'
+  if RUBY_VERSION >= '1.9'
+    s.add_development_dependency 'ruby-debug19'
+  else
+    s.add_development_dependency 'ruby-debug'
+  end
 end
