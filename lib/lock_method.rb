@@ -1,0 +1,3 @@
+module LockMethod
+  # Your code goes here...
+end
