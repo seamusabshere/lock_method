@@ -29,6 +29,8 @@ module LockMethod
     def delete(k)
       if defined?(::Memcached) and bare_storage.is_a?(::Memcached)
         begin; bare_storage.delete(k); rescue ::Memcached::NotFound; nil; end
+      elsif defined?(::Redis) and bare_storage.is_a?(::Redis)
+        bare_storage.del k
       else
         bare_storage.delete k
       end

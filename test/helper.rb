@@ -52,6 +52,3 @@ end
 class Test::Unit::TestCase
 
 end
-
-require 'memcached'
-$my_cache = Memcached.new 'localhost:11211'
