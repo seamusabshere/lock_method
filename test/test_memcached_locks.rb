@@ -1,9 +1,9 @@
 require 'helper'
 
-class TestMemcachedLocks < Test::Unit::TestCase
+class TestMemcachedLockCollection < Test::Unit::TestCase
   def setup
-    LockMethod.config.client = $my_cache
-    LockMethod.locks.flush
+    LockMethod.config.storage = $my_cache
+    LockMethod.lock_collection.flush
   end
     
   include SharedTests

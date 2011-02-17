@@ -29,15 +29,15 @@ The default is to use filesystem lockfiles, usually in <tt>/tmp/lock_method/*</t
 
 If you want to share locks among various machines, you can use a Memcached or Redis client:
 
-    LockMethod.config.client = Memcached.new '127.0.0.1:11211'
+    LockMethod.config.storage = Memcached.new '127.0.0.1:11211'
 
 or
 
-    LockMethod.config.client = Redis.new
+    LockMethod.config.storage = Redis.new
 
 or this might even work...
 
-    LockMethod.config.client = Rails.cache
+    LockMethod.config.storage = Rails.cache
 
 See <tt>Config</tt> for the full list of supported caches.
 

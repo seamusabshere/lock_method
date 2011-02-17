@@ -3,103 +3,114 @@ module SharedTests
     assert_equal ["hello from my_blog"], new_instance_of_my_blog.get_latest_entries
   end
   
-  def test_class_methods_with_forking
-    blocker = Kernel.fork { Blog2.get_latest_entries }
+  def test_locked_by_normally_terminating_process
+    pid = Kernel.fork { Blog2.get_latest_entries }
   
-    # the blocker won't have finished
-    sleep 0.2
-    assert_raises(LockMethod::Locked) do
-      Blog2.get_latest_entries
-    end
-  
-    # the blocker will have finished
-    sleep 3
-    assert_nothing_raised do
-      Blog2.get_latest_entries
-    end
-  end
-  
-  def test_class_methods_with_threads
-    blocker = Thread.new { Blog2.get_latest_entries }
-  
-    # the blocker won't have finished
-    assert_raises(LockMethod::Locked) do
-      Blog2.get_latest_entries
-    end
-  
-    # now we're sure the blocker has finished
-    blocker.kill
-    assert_nothing_raised do
-      Blog2.get_latest_entries
-    end
-  end
-  
-  def test_class_methods_with_unkilled_threads
-    blocker = Thread.new { Blog2.get_latest_entries }
-  
-    # the blocker won't have finished
-    assert_raises(LockMethod::Locked) do
-      Blog2.get_latest_entries
-    end
-  
-    # the thread should be dead...
-    sleep 3
-    assert_nothing_raised do
-      Blog2.get_latest_entries
-    end
-  end
-  
-  def test_instance_methods_with_forking
-    blocker = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
-  
-    # the blocker won't have finished
-    sleep 0.2
-    assert_raises(LockMethod::Locked) do
-      new_instance_of_my_blog.get_latest_entries
-    end
-  
-    # the blocker will have finished
-    sleep 3
-    assert_nothing_raised do
-      new_instance_of_my_blog.get_latest_entries
-    end
-  end
-  
-  def test_instance_methods_with_threads
-    blocker = Thread.new { new_instance_of_my_blog.get_latest_entries }
-  
-    # the blocker won't have finished
-    assert_raises(LockMethod::Locked) do
-      new_instance_of_my_blog.get_latest_entries
-    end
-  
-    # now we're sure the blocker has finished
-    blocker.kill
-    assert_nothing_raised do
-      new_instance_of_my_blog.get_latest_entries
-    end
+    # give it a bit of time to lock
+    sleep 0.5
     
-    def test_instance_methods_with_unkilled_threads
-      blocker = Thread.new { new_instance_of_my_blog.get_latest_entries }
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      Blog2.get_latest_entries
+    end
   
-      # the blocker won't have finished
-      assert_raises(LockMethod::Locked) do
-        new_instance_of_my_blog.get_latest_entries
-      end
-  
-      # the thread should be dead...
-      sleep 3
-      assert_nothing_raised do
-        new_instance_of_my_blog.get_latest_entries
-      end
+    # let the blocker finish
+    Process.wait pid
+    
+    assert_nothing_raised do
+      Blog2.get_latest_entries
     end
   end
   
-  def test_clear_instance_method_lock_with_forking
-    blocker = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
-  
+  def test_locked_by_SIGKILLed_process
+    pid = Kernel.fork { Blog2.get_latest_entries }
+    
+    # give it a bit of time to lock
+    sleep 0.5
+    
     # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      Blog2.get_latest_entries
+    end
+  
+    # kill it and then wait for it to be reaped
+    Process.detach pid
+    Process.kill 9, pid
+    sleep 1
+    
+    # now we're sure
+    assert_nothing_raised do
+      Blog2.get_latest_entries
+    end
+  end
+  
+  def test_locked_by_killed_thread
+    blocker = Thread.new { Blog2.get_latest_entries }
+  
+    # give it a bit of time to lock
     sleep 0.2
+    
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      Blog2.get_latest_entries
+    end
+  
+    # kinda like a SIGKILL
+    blocker.kill
+    
+    # now we're sure
+    assert_nothing_raised do
+      Blog2.get_latest_entries
+    end
+  end
+  
+  def test_locked_by_normally_finishing_thread
+    blocker = Thread.new { Blog2.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 0.2
+    
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      Blog2.get_latest_entries
+    end
+  
+    # wait to finish
+    blocker.join
+    
+    # now we're sure
+    assert_nothing_raised do
+      Blog2.get_latest_entries
+    end
+  end
+  
+  def test_lock_instance_method
+    pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 0.2
+    
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      new_instance_of_my_blog.get_latest_entries
+    end
+  
+    # wait for it
+    Process.wait pid
+    
+    # ok now
+    assert_nothing_raised do
+      new_instance_of_my_blog.get_latest_entries
+    end
+  end
+  
+  def test_clear_instance_method_lock
+    pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 0.2
+    
+    # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
       new_instance_of_my_blog.get_latest_entries
     end
@@ -109,13 +120,17 @@ module SharedTests
     assert_nothing_raised do
       new_instance_of_my_blog.get_latest_entries
     end
+    
+    Process.wait pid
   end
   
-  def test_clear_class_method_lock_with_forking
-    blocker = Kernel.fork { Blog2.get_latest_entries }
+  def test_clear_class_method_lock
+    pid = Kernel.fork { Blog2.get_latest_entries }
   
-    # the blocker won't have finished
+    # give it a bit of time to lock
     sleep 0.2
+    
+    # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
       Blog2.get_latest_entries
     end
@@ -125,27 +140,33 @@ module SharedTests
     assert_nothing_raised do
       Blog2.get_latest_entries
     end
+    
+    Process.wait pid
   end
   
-  def test_expiring_class_method_locks_with_forking
-    blocker = Kernel.fork { Blog2.get_latest_entries2 }
-
-    # the blocker won't have finished
+  def test_expiring_lock
+    pid = Kernel.fork { Blog2.get_latest_entries2 }
+  
+    # give it a bit of time to lock
     sleep 0.2
+    
+    # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
       Blog2.get_latest_entries2
     end
-
+  
     # still no...
     sleep 0.2
     assert_raises(LockMethod::Locked) do
       Blog2.get_latest_entries2
     end
     
-    # but the lock expiry is 1 second, so by 1.4&change we're done
-    sleep 1
+    # but the lock expiry is 1 second, so by 1.2&change we're done
+    sleep 1.1
     assert_nothing_raised do
       Blog2.get_latest_entries2
     end
+    
+    Process.wait pid
   end
 end

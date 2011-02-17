@@ -1,8 +1,7 @@
 # See the README.rdoc for more info!
 module LockMethod
   autoload :Config, 'lock_method/config'
-  autoload :DefaultClient, 'lock_method/default_client'
-  autoload :Locks, 'lock_method/locks'
+  autoload :LockCollection, 'lock_method/lock_collection'
 
   class Locked < ::StandardError
   end
@@ -11,8 +10,8 @@ module LockMethod
     Config.instance
   end
   
-  def self.locks #:nodoc:
-    Locks.instance
+  def self.lock_collection #:nodoc:
+    LockCollection.instance
   end
     
   # All Objects, including instances and Classes, get the <tt>#clear_lock</tt> method.
@@ -22,7 +21,7 @@ module LockMethod
     # Example:
     #     my_blog.clear_lock :get_latest_entries
     def clear_lock(method_id)
-      ::LockMethod.locks.clear self, method_id
+      ::LockMethod.lock_collection.clear self, method_id
     end
   end
 
@@ -47,7 +46,7 @@ module LockMethod
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
       define_method method_id do |*args|
-        ::LockMethod.locks.attempt self, method_id, ttl, *args do
+        ::LockMethod.lock_collection.attempt self, method_id, ttl, *args do
           send original_method_id, *args
         end
       end
