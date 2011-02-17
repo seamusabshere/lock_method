@@ -39,7 +39,11 @@ module LockMethod
     def set(k, v, ttl)
       ttl ||= ::LockMethod.config.default_ttl
       if defined?(::Redis) and bare_storage.is_a?(::Redis)
-        bare_storage.setex k, ttl, ::Marshal.dump(v)
+        if ttl == 0
+          bare_storage.set k, ::Marshal.dump(v)
+        else
+          bare_storage.setex k, ttl, ::Marshal.dump(v)
+        end
       elsif bare_storage.respond_to?(:set)
         bare_storage.set k, v, ttl
       elsif bare_storage.respond_to?(:write)
