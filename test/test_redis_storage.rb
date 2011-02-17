@@ -8,7 +8,7 @@ if ENV['REDIS_URL']
     def setup
       uri = URI.parse(ENV["REDIS_URL"])
       LockMethod.config.storage = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-      LockMethod.lock_collection.flush
+      LockMethod.storage.flush
     end
     
     include SharedTests

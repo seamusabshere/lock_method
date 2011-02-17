@@ -2,14 +2,11 @@ require 'tmpdir'
 require 'fileutils'
 require 'thread'
 module LockMethod
-  class LockCollection
-    class DefaultStorage
+  class Storage
+    class DefaultStorageClient
       def get(k)
         return unless ::File.exist? path(k)
-        str = ::File.read path(k)
-        expiry, v = ::Marshal.load str
-        return if expiry.to_f < ::Time.now.to_f
-        v
+        ::Marshal.load ::File.read(path(k))
       rescue ::Errno::ENOENT
       end
     
@@ -17,8 +14,7 @@ module LockMethod
         semaphore.synchronize do
           ::File.open(path(k), ::File::RDWR|::File::CREAT) do |f|
             f.flock ::File::LOCK_EX
-            expiry = (ttl == 0) ? 0 : ::Time.now + ttl
-            f.write ::Marshal.dump([expiry, v])
+            f.write ::Marshal.dump(v)
           end
         end
       end

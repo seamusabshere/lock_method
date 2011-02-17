@@ -1,8 +1,11 @@
+require 'lock_method/version'
 # See the README.rdoc for more info!
 module LockMethod
   autoload :Config, 'lock_method/config'
-  autoload :LockCollection, 'lock_method/lock_collection'
+  autoload :Storage, 'lock_method/storage'
+  autoload :Lock, 'lock_method/lock'
 
+  # This is what gets raised when you try to run a locked method.
   class Locked < ::StandardError
   end
 
@@ -10,8 +13,8 @@ module LockMethod
     Config.instance
   end
   
-  def self.lock_collection #:nodoc:
-    LockCollection.instance
+  def self.storage #:nodoc:
+    Storage.instance
   end
     
   # All Objects, including instances and Classes, get the <tt>#clear_lock</tt> method.
@@ -21,7 +24,8 @@ module LockMethod
     # Example:
     #     my_blog.clear_lock :get_latest_entries
     def clear_lock(method_id)
-      ::LockMethod.lock_collection.clear self, method_id
+      lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id
+      lock.delete
     end
   end
 
@@ -46,9 +50,8 @@ module LockMethod
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
       define_method method_id do |*args|
-        ::LockMethod.lock_collection.attempt self, method_id, ttl, *args do
-          send original_method_id, *args
-        end
+        lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id, :original_method_id => original_method_id, :args => args, :ttl => ttl
+        lock.call_original_method
       end
     end
   end

@@ -1,9 +1,9 @@
 require 'helper'
 
-class TestDefaultStorage < Test::Unit::TestCase
+class TestDefaultStorageClient < Test::Unit::TestCase
   def setup
     LockMethod.config.storage = nil
-    LockMethod.lock_collection.flush
+    LockMethod.storage.flush
   end
   
   include SharedTests

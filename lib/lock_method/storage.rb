@@ -1,31 +1,11 @@
 require 'singleton'
 module LockMethod
-  # All lock_collection requests go through a clearinghouse.
-  class LockCollection #:nodoc: all
-    autoload :Lock, 'lock_method/lock_collection/lock'
-    autoload :DefaultStorage, 'lock_method/lock_collection/default_storage'
+  # All storage requests go through a clearinghouse.
+  class Storage #:nodoc: all
+    autoload :DefaultStorageClient, 'lock_method/storage/default_storage_client'
     
     include ::Singleton
     
-    def attempt(obj, method_id, ttl, *args)
-      l = Lock.new :obj => obj, :method_id => method_id
-      if other_thread_signature = get(l.method_signature) and Lock.valid?(other_thread_signature)
-        raise Locked
-      else
-        begin
-          set l.method_signature, l.thread_signature, ttl
-          yield
-        ensure
-          delete l.method_signature
-        end
-      end
-    end
-    
-    def clear(obj, method_id)
-      l = Lock.new :obj => obj, :method_id => method_id
-      delete l.method_signature
-    end
-
     def delete(k)
       if defined?(::Memcached) and bare_storage.is_a?(::Memcached)
         begin; bare_storage.delete(k); rescue ::Memcached::NotFound; nil; end
@@ -44,7 +24,7 @@ module LockMethod
       if defined?(::Memcached) and bare_storage.is_a?(::Memcached)
         begin; bare_storage.get(k); rescue ::Memcached::NotFound; nil; end
       elsif defined?(::Redis) and bare_storage.is_a?(::Redis)
-        if cached_v = bare_storage.get(k)
+        if cached_v = bare_storage.get(k) and cached_v.is_a?(::String)
           ::Marshal.load cached_v
         end
       elsif bare_storage.respond_to?(:get)
@@ -59,7 +39,7 @@ module LockMethod
     def set(k, v, ttl)
       ttl ||= ::LockMethod.config.default_ttl
       if defined?(::Redis) and bare_storage.is_a?(::Redis)
-        bare_storage.set k, ::Marshal.dump(v)
+        bare_storage.setex k, ttl, ::Marshal.dump(v)
       elsif bare_storage.respond_to?(:set)
         bare_storage.set k, v, ttl
       elsif bare_storage.respond_to?(:write)
@@ -74,7 +54,7 @@ module LockMethod
     end
     
     def bare_storage
-      ::LockMethod.config.storage
+      Config.instance.storage
     end
   end
 end

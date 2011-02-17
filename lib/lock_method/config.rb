@@ -28,7 +28,7 @@ module LockMethod
     end
 
     def storage #:nodoc:
-      @storage ||= LockCollection::DefaultStorage.new
+      @storage ||= Storage::DefaultStorageClient.new
     end
     
     # TTL for method caches. Defaults to 24 hours.

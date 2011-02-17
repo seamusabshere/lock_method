@@ -7,7 +7,7 @@ module SharedTests
     pid = Kernel.fork { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.5
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -26,7 +26,7 @@ module SharedTests
     pid = Kernel.fork { Blog2.get_latest_entries }
     
     # give it a bit of time to lock
-    sleep 0.5
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -48,7 +48,7 @@ module SharedTests
     blocker = Thread.new { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -68,7 +68,7 @@ module SharedTests
     blocker = Thread.new { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -88,7 +88,7 @@ module SharedTests
     pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -108,7 +108,7 @@ module SharedTests
     pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -128,7 +128,7 @@ module SharedTests
     pid = Kernel.fork { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -148,7 +148,7 @@ module SharedTests
     pid = Kernel.fork { Blog2.get_latest_entries2 }
   
     # give it a bit of time to lock
-    sleep 0.2
+    sleep 1
     
     # the blocker won't have finished
     assert_raises(LockMethod::Locked) do
@@ -156,13 +156,13 @@ module SharedTests
     end
   
     # still no...
-    sleep 0.2
+    sleep 1
     assert_raises(LockMethod::Locked) do
       Blog2.get_latest_entries2
     end
     
     # but the lock expiry is 1 second, so by 1.2&change we're done
-    sleep 1.1
+    sleep 5
     assert_nothing_raised do
       Blog2.get_latest_entries2
     end
