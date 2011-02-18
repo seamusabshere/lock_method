@@ -7,8 +7,9 @@ if ENV['REDIS_URL']
   class TestRedisStorage < Test::Unit::TestCase
     def setup
       uri = URI.parse(ENV["REDIS_URL"])
-      LockMethod.config.storage = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-      LockMethod.storage.flush
+      my_cache = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+      my_cache.flushdb
+      LockMethod.config.storage = my_cache
     end
     
     include SharedTests

@@ -39,7 +39,7 @@ or this might even work...
 
     LockMethod.config.storage = Rails.cache
 
-See <tt>Config</tt> for the full list of supported caches.
+See Config for the full list of supported caches.
 
 == Copyright
 

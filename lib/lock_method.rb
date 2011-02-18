@@ -2,8 +2,8 @@ require 'lock_method/version'
 # See the README.rdoc for more info!
 module LockMethod
   autoload :Config, 'lock_method/config'
-  autoload :Storage, 'lock_method/storage'
   autoload :Lock, 'lock_method/lock'
+  autoload :DefaultStorageClient, 'lock_method/default_storage_client'
 
   # This is what gets raised when you try to run a locked method.
   class Locked < ::StandardError
@@ -13,10 +13,6 @@ module LockMethod
     Config.instance
   end
   
-  def self.storage #:nodoc:
-    Storage.instance
-  end
-    
   # All Objects, including instances and Classes, get the <tt>#clear_lock</tt> method.
   module InstanceMethods
     # Clear the lock for a particular method.

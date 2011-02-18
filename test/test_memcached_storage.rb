@@ -4,8 +4,9 @@ require 'memcached'
 
 class TestMemcachedStorage < Test::Unit::TestCase
   def setup
-    LockMethod.config.storage = Memcached.new 'localhost:11211'
-    LockMethod.storage.flush
+    my_cache = Memcached.new 'localhost:11211'
+    my_cache.flush
+    LockMethod.config.storage = my_cache
   end
     
   include SharedTests

@@ -19,16 +19,23 @@ module LockMethod
     # * memcache-storage[https://github.com/mperham/memcache-storage] (MemCache, the one commonly used by Rails)
     #
     # Supported Redis clients:
-    # * redis[https://github.com/ezmobius/redis-rb] (NOTE: AUTOMATIC CACHE EXPIRATION NOT SUPPORTED)
+    # * redis[https://github.com/ezmobius/redis-rb]
+    #
+    # Supports anything that works with the cache[https://github.com/seamusabshere/cache] gem.
     #
     # Example:
     #     LockMethod.config.storage = Memcached.new '127.0.0.1:11211'
-    def storage=(storage)
-      @storage = storage
+    def storage=(raw_client_or_nil)
+      if raw_client_or_nil.nil?
+        @storage = nil
+      else
+        require 'cache'
+        @storage = ::Cache.new raw_client_or_nil
+      end
     end
 
     def storage #:nodoc:
-      @storage ||= Storage::DefaultStorageClient.new
+      @storage ||= DefaultStorageClient.instance
     end
     
     # TTL for method caches. Defaults to 24 hours.
