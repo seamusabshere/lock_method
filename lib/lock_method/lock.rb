@@ -1,8 +1,8 @@
 module LockMethod
   class Lock #:nodoc: all
     class << self
-      def find(method_signature)
-        if hsh = Config.instance.storage.get(method_signature)
+      def find(cache_key)
+        if hsh = Config.instance.storage.get(cache_key)
           new hsh
         end
       end
@@ -59,7 +59,7 @@ module LockMethod
     end
     
     def delete
-      Config.instance.storage.delete method_signature
+      Config.instance.storage.delete cache_key
     end
     
     def save
@@ -68,7 +68,7 @@ module LockMethod
       self.thread_object_id
       self.expiry
       # --
-      Config.instance.storage.set method_signature, to_hash, ttl
+      Config.instance.storage.set cache_key, to_hash, ttl
     end
     
     def to_hash
@@ -79,9 +79,13 @@ module LockMethod
     end
     
     def locked?
-      if existing_lock = Lock.find(method_signature)
+      if existing_lock = Lock.find(cache_key)
         existing_lock.in_force?
       end
+    end
+    
+    def cache_key
+      [ 'LockMethod', 'Lock', method_signature ].join ','
     end
     
     def in_force?

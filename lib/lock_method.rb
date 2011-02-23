@@ -13,13 +13,13 @@ module LockMethod
     Config.instance
   end
   
-  # All Objects, including instances and Classes, get the <tt>#clear_lock</tt> method.
+  # All Objects, including instances and Classes, get the <tt>#clear_method_lock</tt> method.
   module InstanceMethods
     # Clear the lock for a particular method.
     #
     # Example:
-    #     my_blog.clear_lock :get_latest_entries
-    def clear_lock(method_id)
+    #     my_blog.clear_method_lock :get_latest_entries
+    def clear_method_lock(method_id)
       lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id
       lock.delete
     end

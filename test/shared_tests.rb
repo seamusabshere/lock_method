@@ -116,7 +116,7 @@ module SharedTests
     end
   
     # but now we clear the lock
-    new_instance_of_my_blog.clear_lock :get_latest_entries
+    new_instance_of_my_blog.clear_method_lock :get_latest_entries
     assert_nothing_raised do
       new_instance_of_my_blog.get_latest_entries
     end
@@ -136,7 +136,7 @@ module SharedTests
     end
     
     # but now we clear the lock
-    Blog2.clear_lock :get_latest_entries
+    Blog2.clear_method_lock :get_latest_entries
     assert_nothing_raised do
       Blog2.get_latest_entries
     end

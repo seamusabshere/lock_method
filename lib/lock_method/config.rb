@@ -1,3 +1,4 @@
+require 'cache'
 require 'singleton'
 module LockMethod
   # Here's where you set config options.
@@ -28,8 +29,9 @@ module LockMethod
     def storage=(raw_client_or_nil)
       if raw_client_or_nil.nil?
         @storage = nil
+      elsif raw_client_or_nil.is_a?(::Cache)
+        @storage = raw_client_or_nil
       else
-        require 'cache'
         @storage = ::Cache.new raw_client_or_nil
       end
     end
