@@ -85,7 +85,15 @@ module LockMethod
     end
     
     def cache_key
-      [ 'LockMethod', 'Lock', method_signature ].join ','
+      if obj.is_a? ::Class
+        [ 'LockMethod', 'Lock', method_signature ].join ','
+      else
+        [ 'LockMethod', 'Lock', method_signature, obj_hash ].join ','
+      end
+    end
+    
+    def obj_hash
+      @obj_hash ||= obj.hash
     end
     
     def in_force?

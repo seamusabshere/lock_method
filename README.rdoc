@@ -6,12 +6,17 @@ It's like <tt>alias_method</tt>, but it's <tt>lock_method</tt>!
 
     require 'lock_method'
     class Blog
-      # [...]
+      attr_accessor :url
+      
       def get_latest_entries
         sleep 5
       end
-      # [...]
       lock_method :get_latest_entries
+
+      # used by lock_method to differentiate between instances
+      def hash
+        url.hash
+      end
     end
 
 Then you can do
@@ -23,11 +28,21 @@ Just in case, you can clear them
 
     my_blog.clear_method_lock :get_latest_entries
 
-== One lock per method
+== Ignores arguments when locking a method
 
 lock_method ignores arguments when locking. So if you call Foo.bar(:a), calls to Foo.bar(:b) will be locked until the first call finishes.
 
 Maybe future versions will support this.
+
+== Defining #hash
+
+If you want to lock instance methods, you should define <tt>#hash</tt> on those instances.
+
+You should follow Ruby convention and have <tt>#hash</tt> return a <tt>Fixnum</tt>.
+
+Ideally, you should try to make a <tt>String</tt> or a <tt>Hash</tt> and call the standard <tt>#hash</tt> on that.
+
+Note: this is NOT the same thing as <tt>#to_hash</tt>! That returns a <tt>Hash</tt>... but what we want is an integer "hash code."
 
 == Configuration (and supported cache clients)
 

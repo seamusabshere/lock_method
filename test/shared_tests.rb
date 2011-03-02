@@ -1,3 +1,10 @@
+def new_instance_of_my_blog
+  Blog1.new 'my_blog', 'http://my_blog.example.com'
+end
+def new_instance_of_another_blog
+  Blog1.new 'another_blog', 'http://another_blog.example.com'
+end
+
 module SharedTests
   def test_locked_method_return_value
     assert_equal ["hello from my_blog"], new_instance_of_my_blog.get_latest_entries
@@ -102,6 +109,20 @@ module SharedTests
     assert_nothing_raised do
       new_instance_of_my_blog.get_latest_entries
     end
+  end
+  
+  def test_instance_method_lock_is_unique_to_instance
+    pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 1
+    
+    # the blocker won't have finished
+    assert_nothing_raised do
+      new_instance_of_another_blog.get_latest_entries
+    end
+  
+    Process.wait pid
   end
   
   def test_clear_instance_method_lock

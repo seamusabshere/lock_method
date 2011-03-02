@@ -25,6 +25,9 @@ class Blog1
     ["voo vaa #{name}"]
   end
   lock_method :get_latest_entries2, 5 # second
+  def hash
+    name.hash
+  end
 end
 
 class Blog2
@@ -40,13 +43,6 @@ class Blog2
     end
     lock_method :get_latest_entries2, 5 # second
   end
-end
-
-def new_instance_of_my_blog
-  Blog1.new 'my_blog', 'http://my_blog.example.com'
-end
-def new_instance_of_another_blog
-  Blog1.new 'another_blog', 'http://another_blog.example.com'
 end
 
 class Test::Unit::TestCase
