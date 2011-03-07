@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.require_paths = ["lib"]
   
-  s.add_dependency 'cache'
+  s.add_dependency 'cache', '>=0.2.1'
   s.add_development_dependency 'test-unit'
   s.add_development_dependency 'memcached'
   s.add_development_dependency 'redis'

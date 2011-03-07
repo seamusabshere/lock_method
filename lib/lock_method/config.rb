@@ -26,13 +26,12 @@ module LockMethod
     #
     # Example:
     #     LockMethod.config.storage = Memcached.new '127.0.0.1:11211'
-    def storage=(raw_client_or_nil)
-      if raw_client_or_nil.nil?
+    def storage=(storage = nil)
+      if storage.nil?
+        # set this to nil so that the DefaultStorageClient can take over.
         @storage = nil
-      elsif raw_client_or_nil.is_a?(::Cache)
-        @storage = raw_client_or_nil
       else
-        @storage = ::Cache.new raw_client_or_nil
+        @storage = ::Cache.wrap storage
       end
     end
 
