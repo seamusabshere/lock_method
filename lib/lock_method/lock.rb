@@ -7,10 +7,10 @@ module LockMethod
         end
       end
       def klass_name(obj)
-        obj.is_a?(::Class) ? obj.to_s : obj.class.to_s
+        (obj.is_a?(::Class) or obj.is_a?(::Module)) ? obj.to_s : obj.class.to_s
       end
       def method_delimiter(obj)
-        obj.is_a?(::Class) ? '.' : '#'
+        (obj.is_a?(::Class) or obj.is_a?(::Module)) ? '.' : '#'
       end
       def method_signature(obj, method_id)
         [ klass_name(obj), method_id ].join method_delimiter(obj)
@@ -85,7 +85,7 @@ module LockMethod
     end
     
     def cache_key
-      if obj.is_a? ::Class
+      if obj.is_a?(::Class) or obj.is_a?(::Module)
         [ 'LockMethod', 'Lock', method_signature ].join ','
       else
         [ 'LockMethod', 'Lock', method_signature, obj_hash ].join ','
@@ -93,7 +93,7 @@ module LockMethod
     end
     
     def obj_hash
-      @obj_hash ||= obj.hash
+      @obj_hash ||= obj.respond_to?(:method_lock_hash) ? obj.method_lock_hash : obj.hash
     end
     
     def in_force?

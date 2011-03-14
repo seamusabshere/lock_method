@@ -26,7 +26,16 @@ class Blog1
   end
   lock_method :get_latest_entries2, 5 # second
   def hash
+    raise "Used hash"
+  end
+  def method_lock_hash
     name.hash
+  end
+end
+
+class Blog1a < Blog1
+  def method_lock_hash
+    raise "Used method_lock_hash"
   end
 end
 
@@ -41,6 +50,21 @@ class Blog2
       sleep 8
       ["voo vaa #{name}"]
     end
+    lock_method :get_latest_entries2, 5 # second
+  end
+end
+
+module BlogM
+  def self.get_latest_entries
+    sleep 8
+    'danke schoen'
+  end
+  def self.get_latest_entries2
+    sleep 8
+    ["voo vaa #{name}"]
+  end
+  class << self
+    lock_method :get_latest_entries
     lock_method :get_latest_entries2, 5 # second
   end
 end

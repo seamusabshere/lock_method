@@ -29,6 +29,25 @@ module SharedTests
     end
   end
   
+    def test_module_method_locked_by_normally_terminating_process
+    pid = Kernel.fork { BlogM.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 1
+    
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      BlogM.get_latest_entries
+    end
+  
+    # let the blocker finish
+    Process.wait pid
+    
+    assert_nothing_raised do
+      BlogM.get_latest_entries
+    end
+  end
+  
   def test_locked_by_SIGKILLed_process
     pid = Kernel.fork { Blog2.get_latest_entries }
     

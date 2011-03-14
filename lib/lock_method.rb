@@ -56,4 +56,5 @@ end
 unless ::Object.method_defined? :lock_method
   ::Object.send :include, ::LockMethod::InstanceMethods
   ::Class.send :include, ::LockMethod::ClassMethods
+  ::Module.extend ::LockMethod::ClassMethods
 end

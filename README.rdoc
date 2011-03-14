@@ -48,6 +48,10 @@ Ideally, you should try to make a <tt>String</tt> or a <tt>Hash</tt> and call th
 
 Note: this is NOT the same thing as <tt>#to_hash</tt>! That returns a <tt>Hash</tt>... but what we want is an integer "hash code."
 
+== Defining #method_lock_hash instead of #hash
+
+If you don't want to modify #hash, you can use #method_lock_hash instead.
+
 == Configuration (and supported cache clients)
 
 The default is to use filesystem lockfiles, usually in <tt>/tmp/lock_method/*</tt>.
