@@ -32,11 +32,9 @@ Just in case, you can clear them
 
 In production use at {carbon.brighterplanet.com}[http://carbon.brighterplanet.com], the Brighter Planet emission estimate web service.
 
-== Ignores arguments when locking a method
+== Pays attention to method arguments
 
-lock_method ignores arguments when locking. So if you call Foo.bar(:a), calls to Foo.bar(:b) will be locked until the first call finishes.
-
-Maybe future versions will support this.
+If you lock Foo.bar(*args), calling Foo.bar(:baz) will not lock out Foo.bar(:zoo).
 
 == Defining #hash
 

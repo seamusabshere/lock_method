@@ -16,7 +16,7 @@ class Blog1
     @url = url
   end
   def get_latest_entries
-    sleep 8
+    sleep 2
     ["hello from #{name}"]
   end
   lock_method :get_latest_entries
@@ -42,7 +42,7 @@ end
 class Blog2
   class << self
     def get_latest_entries
-      sleep 8
+      sleep 2
       'danke schoen'
     end
     lock_method :get_latest_entries
@@ -51,12 +51,17 @@ class Blog2
       ["voo vaa #{name}"]
     end
     lock_method :get_latest_entries2, 5 # second
+    def work_really_hard_on(target)
+      sleep 2
+      target.to_s
+    end
+    lock_method :work_really_hard_on
   end
 end
 
 module BlogM
   def self.get_latest_entries
-    sleep 8
+    sleep 2
     'danke schoen'
   end
   def self.get_latest_entries2

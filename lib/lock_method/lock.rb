@@ -1,10 +1,9 @@
+require 'digest/md5'
 module LockMethod
   class Lock #:nodoc: all
     class << self
       def find(cache_key)
-        if hsh = Config.instance.storage.get(cache_key)
-          new hsh
-        end
+        Config.instance.storage.get cache_key
       end
       def klass_name(obj)
         (obj.is_a?(::Class) or obj.is_a?(::Module)) ? obj.to_s : obj.class.to_s
@@ -27,15 +26,14 @@ module LockMethod
       end
     end
 
-    def initialize(options = {})
-      options.each do |k, v|
+    def initialize(attrs = {})
+      attrs.each do |k, v|
         instance_variable_set "@#{k}", v
       end
     end
 
     attr_reader :obj
     attr_reader :method_id
-    attr_reader :original_method_id
     attr_reader :args
         
     def method_signature
@@ -54,71 +52,59 @@ module LockMethod
       @thread_object_id ||= ::Thread.current.object_id
     end
     
-    def expiry
-      @expiry ||= ::Time.now + ttl
+    def obj_hash
+      @obj_hash ||= obj.respond_to?(:method_lock_hash) ? obj.method_lock_hash : obj.hash
     end
-    
+
+    def args_digest
+      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::MD5.hexdigest(args.join)
+    end
+        
     def delete
       Config.instance.storage.delete cache_key
     end
     
     def save
-      # make sure these are set
-      self.pid
-      self.thread_object_id
-      self.expiry
-      # --
-      Config.instance.storage.set cache_key, to_hash, ttl
-    end
-    
-    def to_hash
-      instance_variables.inject({}) do |memo, ivar_name|
-        memo[ivar_name.to_s.sub('@', '')] = instance_variable_get ivar_name
-        memo
-      end
+      Config.instance.storage.set cache_key, self, ttl
     end
     
     def locked?
-      if existing_lock = Lock.find(cache_key)
-        existing_lock.in_force?
+      if other_lock = Lock.find(cache_key)
+        other_lock.process_and_thread_still_alive?
       end
     end
     
     def cache_key
       if obj.is_a?(::Class) or obj.is_a?(::Module)
-        [ 'LockMethod', 'Lock', method_signature ].join ','
+        [ 'LockMethod', 'Lock', method_signature, args_digest ].join ','
       else
-        [ 'LockMethod', 'Lock', method_signature, obj_hash ].join ','
+        [ 'LockMethod', 'Lock', method_signature, obj_hash, args_digest ].join ','
       end
     end
-    
-    def obj_hash
-      @obj_hash ||= obj.respond_to?(:method_lock_hash) ? obj.method_lock_hash : obj.hash
-    end
-    
-    def in_force?
-      not expired? and process_and_thread_still_exist?
-    end
-    
-    def expired?
-      expiry.to_f < ::Time.now.to_f
-    end
-    
-    def process_and_thread_still_exist?
+            
+    def process_and_thread_still_alive?
       if pid == ::Process.pid
         Lock.thread_alive? thread_object_id
       else
         Lock.process_alive? pid
       end
     end
+
+    def marshal_dump
+      [ pid, thread_object_id ]
+    end
     
-    def call_original_method
+    def marshal_load(source)
+      @pid, @thread_object_id = source
+    end
+    
+    def call_and_lock(*original_method_id_and_args)
       if locked?
         raise Locked
       else
         begin
           save
-          obj.send original_method_id, *args
+          obj.send *original_method_id_and_args
         ensure
           delete
         end

@@ -6,11 +6,11 @@ def new_instance_of_another_blog
 end
 
 module SharedTests
-  def test_locked_method_return_value
+  def test_01_locked_method_return_value
     assert_equal ["hello from my_blog"], new_instance_of_my_blog.get_latest_entries
   end
   
-  def test_locked_by_normally_terminating_process
+  def test_02_locked_by_normally_terminating_process
     pid = Kernel.fork { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
@@ -29,7 +29,7 @@ module SharedTests
     end
   end
   
-    def test_module_method_locked_by_normally_terminating_process
+  def test_03_module_method_locked_by_normally_terminating_process
     pid = Kernel.fork { BlogM.get_latest_entries }
   
     # give it a bit of time to lock
@@ -48,7 +48,7 @@ module SharedTests
     end
   end
   
-  def test_locked_by_SIGKILLed_process
+  def test_04_locked_by_SIGKILLed_process
     pid = Kernel.fork { Blog2.get_latest_entries }
     
     # give it a bit of time to lock
@@ -70,7 +70,7 @@ module SharedTests
     end
   end
   
-  def test_locked_by_killed_thread
+  def test_05_locked_by_killed_thread
     blocker = Thread.new { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
@@ -90,7 +90,7 @@ module SharedTests
     end
   end
   
-  def test_locked_by_normally_finishing_thread
+  def test_06_locked_by_normally_finishing_thread
     blocker = Thread.new { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
@@ -110,7 +110,7 @@ module SharedTests
     end
   end
   
-  def test_lock_instance_method
+  def test_07_lock_instance_method
     pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
   
     # give it a bit of time to lock
@@ -130,7 +130,7 @@ module SharedTests
     end
   end
   
-  def test_instance_method_lock_is_unique_to_instance
+  def test_08_instance_method_lock_is_unique_to_instance
     pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
   
     # give it a bit of time to lock
@@ -144,7 +144,7 @@ module SharedTests
     Process.wait pid
   end
   
-  def test_clear_instance_method_lock
+  def test_09_clear_instance_method_lock
     pid = Kernel.fork { new_instance_of_my_blog.get_latest_entries }
   
     # give it a bit of time to lock
@@ -164,7 +164,7 @@ module SharedTests
     Process.wait pid
   end
   
-  def test_clear_class_method_lock
+  def test_10_clear_class_method_lock
     pid = Kernel.fork { Blog2.get_latest_entries }
   
     # give it a bit of time to lock
@@ -184,7 +184,7 @@ module SharedTests
     Process.wait pid
   end
   
-  def test_expiring_lock
+  def test_11_expiring_lock
     pid = Kernel.fork { Blog2.get_latest_entries2 }
   
     # give it a bit of time to lock
@@ -208,5 +208,24 @@ module SharedTests
     end
     
     Process.wait pid
+  end
+  
+  def test_12_locked_according_to_method_arguments
+    pid = Kernel.fork { Blog2.work_really_hard_on :foo }
+  
+    # give it a bit of time to lock
+    sleep 1
+        
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      Blog2.work_really_hard_on :foo
+    end
+  
+    # let the blocker finish
+    Process.wait pid
+    
+    assert_nothing_raised do
+      Blog2.work_really_hard_on :foo
+    end
   end
 end

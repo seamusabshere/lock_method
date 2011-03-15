@@ -46,8 +46,8 @@ module LockMethod
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
       define_method method_id do |*args|
-        lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id, :original_method_id => original_method_id, :args => args, :ttl => ttl
-        lock.call_original_method
+        lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id, :args => args, :ttl => ttl
+        lock.call_and_lock original_method_id, *args
       end
     end
   end

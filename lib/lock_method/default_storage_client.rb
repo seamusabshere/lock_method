@@ -4,18 +4,37 @@ require 'fileutils'
 require 'thread'
 module LockMethod
   class DefaultStorageClient #:nodoc: all
+
     include ::Singleton
+
+    class Entry
+      attr_reader :created_at
+      attr_reader :ttl
+      attr_reader :v
+      def initialize(attrs = {})
+        attrs.each do |k, v|
+          instance_variable_set "@#{k}", v
+        end
+      end
+      def expired?
+        ttl.to_i > 0 and (::Time.now.to_f - created_at.to_f) > ttl.to_i
+      end
+    end
+
     def get(k)
-      return unless ::File.exist? path(k)
-      ::Marshal.load ::File.read(path(k))
+      if ::File.exist?(path(k)) and entry = ::Marshal.load(::File.read(path(k))) and not entry.expired?
+        entry.v
+      end
     rescue ::Errno::ENOENT
     end
   
     def set(k, v, ttl)
+      entry = Entry.new :created_at => ::Time.now.to_f, :ttl => ttl, :v => v
       semaphore.synchronize do
+        ::FileUtils.mkdir_p dir unless ::File.directory? dir
         ::File.open(path(k), ::File::RDWR|::File::CREAT) do |f|
           f.flock ::File::LOCK_EX
-          f.write ::Marshal.dump(v)
+          f.write ::Marshal.dump(entry)
         end
       end
     end
@@ -39,9 +58,7 @@ module LockMethod
     end
   
     def dir
-      dir = ::File.expand_path(::File.join(::Dir.tmpdir, 'lock_method'))
-      ::FileUtils.mkdir_p dir unless ::File.directory? dir
-      dir
+      ::File.expand_path ::File.join(::Dir.tmpdir, 'lock_method')
     end
   end
 end
