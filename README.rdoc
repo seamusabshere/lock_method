@@ -2,6 +2,8 @@
 
 It's like <tt>alias_method</tt>, but it's <tt>lock_method</tt>!
 
+Lets you lock a method so that only one process can call it at a time. Defaults to using lockfiles on the local file system, but can be configured to store the locks in Memcached or Redis, allowing the method locks to hold over multiple hosts.
+
 == Example
 
     require 'lock_method'
