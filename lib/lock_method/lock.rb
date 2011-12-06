@@ -26,15 +26,17 @@ module LockMethod
       end
     end
 
-    def initialize(attrs = {})
-      attrs.each do |k, v|
-        instance_variable_set "@#{k}", v
-      end
-    end
-
     attr_reader :obj
     attr_reader :method_id
     attr_reader :args
+
+    def initialize(obj, method_id, options = {})
+      @obj = obj
+      @method_id = method_id
+      options = options.symbolize_keys
+      @ttl = options[:ttl]
+      @args = options[:args]
+    end
         
     def method_signature
       @method_signature ||= Lock.method_signature(obj, method_id)

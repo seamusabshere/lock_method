@@ -1,4 +1,11 @@
+require 'active_support'
+require 'active_support/version'
+if ::ActiveSupport::VERSION::MAJOR >= 3
+  require 'active_support/core_ext'
+end
+
 require 'lock_method/version'
+
 # See the README.rdoc for more info!
 module LockMethod
   autoload :Config, 'lock_method/config'
@@ -20,7 +27,7 @@ module LockMethod
     # Example:
     #     my_blog.clear_method_lock :get_latest_entries
     def clear_method_lock(method_id)
-      lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id
+      lock = ::LockMethod::Lock.new self, method_id
       lock.delete
     end
   end
@@ -46,7 +53,7 @@ module LockMethod
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
       define_method method_id do |*args|
-        lock = ::LockMethod::Lock.new :obj => self, :method_id => method_id, :args => args, :ttl => ttl
+        lock = ::LockMethod::Lock.new self, method_id, :ttl => ttl, :args => args
         lock.call_and_lock original_method_id, *args
       end
     end

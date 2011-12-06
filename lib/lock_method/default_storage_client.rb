@@ -11,10 +11,10 @@ module LockMethod
       attr_reader :created_at
       attr_reader :ttl
       attr_reader :v
-      def initialize(attrs = {})
-        attrs.each do |k, v|
-          instance_variable_set "@#{k}", v
-        end
+      def initialize(ttl, v)
+        @created_at = ::Time.now.to_f
+        @ttl = ttl
+        @v = v
       end
       def expired?
         ttl.to_i > 0 and (::Time.now.to_f - created_at.to_f) > ttl.to_i
@@ -29,7 +29,7 @@ module LockMethod
     end
   
     def set(k, v, ttl)
-      entry = Entry.new :created_at => ::Time.now.to_f, :ttl => ttl, :v => v
+      entry = Entry.new ttl, v
       semaphore.synchronize do
         ::FileUtils.mkdir_p dir unless ::File.directory? dir
         ::File.open(path(k), ::File::RDWR|::File::CREAT, :external_encoding => 'ASCII-8BIT') do |f|
