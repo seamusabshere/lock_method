@@ -32,7 +32,7 @@ module LockMethod
       entry = Entry.new :created_at => ::Time.now.to_f, :ttl => ttl, :v => v
       semaphore.synchronize do
         ::FileUtils.mkdir_p dir unless ::File.directory? dir
-        ::File.open(path(k), ::File::RDWR|::File::CREAT) do |f|
+        ::File.open(path(k), ::File::RDWR|::File::CREAT, :external_encoding => 'ASCII-8BIT') do |f|
           f.flock ::File::LOCK_EX
           f.write ::Marshal.dump(entry)
         end

@@ -228,4 +228,15 @@ module SharedTests
       Blog2.work_really_hard_on :foo
     end
   end
+  
+  def test_13_no_encoding_issues
+    old_int = Encoding.default_internal
+    old_ext = Encoding.default_external
+    Encoding.default_internal = 'UTF-8'
+    Encoding.default_external = 'UTF-8'
+    assert_equal ["hello from my_blog"], new_instance_of_my_blog.get_latest_entries
+  ensure
+    Encoding.default_internal = old_int
+    Encoding.default_external = old_ext
+  end
 end
