@@ -48,48 +48,6 @@ module SharedTests
     end
   end
   
-  def test_04_locked_by_SIGKILLed_process
-    pid = Kernel.fork { Blog2.get_latest_entries }
-    
-    # give it a bit of time to lock
-    sleep 1
-    
-    # the blocker won't have finished
-    assert_raises(LockMethod::Locked) do
-      Blog2.get_latest_entries
-    end
-  
-    # kill it and then wait for it to be reaped
-    Process.detach pid
-    Process.kill 9, pid
-    sleep 1
-    
-    # now we're sure
-    assert_nothing_raised do
-      Blog2.get_latest_entries
-    end
-  end
-  
-  def test_05_locked_by_killed_thread
-    blocker = Thread.new { Blog2.get_latest_entries }
-  
-    # give it a bit of time to lock
-    sleep 1
-    
-    # the blocker won't have finished
-    assert_raises(LockMethod::Locked) do
-      Blog2.get_latest_entries
-    end
-  
-    # kinda like a SIGKILL
-    blocker.kill
-    
-    # now we're sure
-    assert_nothing_raised do
-      Blog2.get_latest_entries
-    end
-  end
-  
   def test_06_locked_by_normally_finishing_thread
     blocker = Thread.new { Blog2.get_latest_entries }
   
