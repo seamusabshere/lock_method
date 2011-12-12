@@ -34,7 +34,11 @@ module LockMethod
 
   # All Classes (but not instances), get the <tt>.lock_method</tt> method.
   module ClassMethods
-    # Lock a method. TTL in seconds, defaults to whatever's in LockMethod.config.default_ttl
+    # Lock a method.
+    #
+    # Options:
+    # * <tt>:ttl</tt> TTL in seconds, defaults to whatever's in LockMethod.config.default_ttl
+    # * <tt>:spin</tt> Whether to wait indefinitely for another lock to expire
     #
     # Note 2: Check out LockMethod.config.default_ttl... the default is 24 hours!
     #
@@ -49,12 +53,19 @@ module LockMethod
     #       # if you wanted a different ttl...
     #       # lock_method :get_latest_entries, 800 #seconds
     #     end
-    def lock_method(method_id, ttl = nil)
+    def lock_method(*args)
+      options = args.extract_options!
+      options = options.symbolize_keys
+      method_id = args.first
+      if args.last.is_a?(::Numeric)
+        options[:ttl] ||= args.last
+      end
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
-      define_method method_id do |*args|
-        lock = ::LockMethod::Lock.new self, method_id, :ttl => ttl, :args => args
-        lock.call_and_lock original_method_id, *args
+      define_method method_id do |*args1|
+        options = options.merge(:args => args1)
+        lock = ::LockMethod::Lock.new self, method_id, options
+        lock.call_and_lock original_method_id, *args1
       end
     end
   end

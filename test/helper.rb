@@ -74,6 +74,16 @@ module BlogM
   end
 end
 
+module BlogSpin
+  def self.get_latest_entries
+    sleep 2
+    'danke schoen'
+  end
+  class << self
+    lock_method :get_latest_entries, :spin => true
+  end
+end
+
 class Test::Unit::TestCase
 
 end

@@ -36,8 +36,13 @@ module LockMethod
       options = options.symbolize_keys
       @ttl = options[:ttl]
       @args = options[:args]
+      @spin = options[:spin]
     end
-        
+    
+    def spin?
+      @spin == true
+    end
+    
     def method_signature
       @method_signature ||= Lock.method_signature(obj, method_id)
     end
@@ -101,6 +106,9 @@ module LockMethod
     end
     
     def call_and_lock(*original_method_id_and_args)
+      until !spin? or !locked?
+        ::Kernel.sleep 0.5
+      end
       if locked?
         raise Locked
       else

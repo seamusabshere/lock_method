@@ -239,4 +239,13 @@ module SharedTests
     Encoding.default_internal = old_int
     Encoding.default_external = old_ext
   end
+  
+  def test_14_spin
+    pid = Kernel.fork { BlogSpin.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 1
+    
+    assert_equal 'danke schoen', BlogSpin.get_latest_entries
+  end
 end
