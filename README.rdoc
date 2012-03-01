@@ -6,7 +6,7 @@ Lets you lock a method so that only one process can call it at a time. Defaults 
 
 == Real-world usage
 
-In production use at {carbon.brighterplanet.com}[http://carbon.brighterplanet.com] and {data.brighterplanet.com}[http://data.brighterplanet.com].
+In production use at {impact.brighterplanet.com}[http://impact.brighterplanet.com] and {data.brighterplanet.com}[http://data.brighterplanet.com].
 
 == Example
 
@@ -20,8 +20,8 @@ In production use at {carbon.brighterplanet.com}[http://carbon.brighterplanet.co
       lock_method :get_latest_entries
 
       # used by lock_method to differentiate between instances
-      def hash
-        url.hash
+      def as_lock
+        url
       end
     end
 
@@ -32,25 +32,21 @@ Then you can do
 
 Just in case, you can clear them
 
-    my_blog.clear_method_lock :get_latest_entries
+    my_blog.lock_method_clear :get_latest_entries
 
 == Pays attention to method arguments
 
 If you lock Foo.bar(*args), calling Foo.bar(:baz) will not lock out Foo.bar(:zoo).
 
-== Defining #hash
+== Defining #as_lock
 
-If you want to lock instance methods, you should define <tt>#hash</tt> on those instances.
+If you want to lock instance methods, you should define <tt>#as_lock</tt> on those instances.
 
-You should follow Ruby convention and have <tt>#hash</tt> return a <tt>Fixnum</tt>.
+== Locking across hosts
 
-Ideally, you should try to make a <tt>String</tt> or a <tt>Hash</tt> and call the standard <tt>#hash</tt> on that.
+If you want to lock across hosts, just use shared storage, like a remote Redis or memcached instance.
 
-Note: this is NOT the same thing as <tt>#to_hash</tt>! That returns a <tt>Hash</tt>... but what we want is an integer "hash code."
-
-== Defining #method_lock_hash instead of #hash
-
-If you don't want to modify #hash, you can use #method_lock_hash instead.
+If you want to lock locally, but you're using shared storage, just get the hostname of the locking instance into the <tt>as_lock</tt>.
 
 == Configuration (and supported cache clients)
 

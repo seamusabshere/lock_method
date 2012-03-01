@@ -25,17 +25,17 @@ class Blog1
     ["voo vaa #{name}"]
   end
   lock_method :get_latest_entries2, 5 # second
-  def hash
-    raise "Used hash"
+  def marshal_dump
+    raise "Used marshal_dump"
   end
-  def method_lock_hash
-    name.hash
+  def as_lock
+    name
   end
 end
 
 class Blog1a < Blog1
-  def method_lock_hash
-    raise "Used method_lock_hash"
+  def as_lock
+    raise "Used as_lock"
   end
 end
 

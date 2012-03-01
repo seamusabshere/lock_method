@@ -1,4 +1,4 @@
-require 'digest/md5'
+require 'digest/sha1'
 module LockMethod
   class Lock #:nodoc: all
     class << self
@@ -41,12 +41,12 @@ module LockMethod
       @ttl ||= Config.instance.default_ttl
     end
     
-    def obj_hash
-      @obj_hash ||= obj.respond_to?(:method_lock_hash) ? obj.method_lock_hash : obj.hash
+    def obj_digest
+      @obj_digest ||= ::Digest::SHA1.hexdigest(::Marshal.dump(obj.respond_to?(:as_lock) ? obj.as_lock : obj))
     end
 
     def args_digest
-      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::MD5.hexdigest(args.join)
+      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::SHA1.hexdigest(::Marshal.dump(args))
     end
         
     def delete
@@ -65,7 +65,7 @@ module LockMethod
       if obj.is_a?(::Class) or obj.is_a?(::Module)
         [ 'LockMethod', 'Lock', method_signature, args_digest ].join ','
       else
-        [ 'LockMethod', 'Lock', method_signature, obj_hash, args_digest ].join ','
+        [ 'LockMethod', 'Lock', method_signature, obj_digest, args_digest ].join ','
       end
     end
             
