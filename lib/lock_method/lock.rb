@@ -14,6 +14,23 @@ module LockMethod
       def method_signature(obj, method_id)
         [ klass_name(obj), method_id ].join method_delimiter(obj)
       end
+      def resolve_lock(obj)
+        case obj
+        when ::Array
+          obj.map do |v|
+            resolve_lock v
+          end
+        when ::Hash
+          obj.inject({}) do |memo, (k, v)|
+            kk = resolve_lock k
+            vv = resolve_lock v
+            memo[kk] = vv
+            memo
+          end
+        else
+          obj.respond_to?(:as_lock) ? [obj.class.name, obj.as_lock] : obj
+        end
+      end
     end
 
     attr_reader :obj
@@ -42,11 +59,11 @@ module LockMethod
     end
     
     def obj_digest
-      @obj_digest ||= ::Digest::SHA1.hexdigest(::Marshal.dump(obj.respond_to?(:as_lock) ? obj.as_lock : obj))
+      @obj_digest ||= ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(obj)))
     end
 
     def args_digest
-      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::SHA1.hexdigest(::Marshal.dump(args))
+      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(args)))
     end
         
     def delete
