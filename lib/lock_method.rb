@@ -4,20 +4,22 @@ if ::ActiveSupport::VERSION::MAJOR >= 3
   require 'active_support/core_ext'
 end
 
-require 'lock_method/version'
+require 'lock_method/config'
+require 'lock_method/lock'
+require 'lock_method/default_storage_client'
 
 # See the README.rdoc for more info!
 module LockMethod
-  autoload :Config, 'lock_method/config'
-  autoload :Lock, 'lock_method/lock'
-  autoload :DefaultStorageClient, 'lock_method/default_storage_client'
-
   # This is what gets raised when you try to run a locked method.
   class Locked < ::StandardError
   end
 
-  def self.config #:nodoc:
-    Config.instance
+  MUTEX = ::Mutex.new
+
+  def LockMethod.config #:nodoc:
+    @config || MUTEX.synchronize do
+      @config ||= Config.new
+    end
   end
   
   # All Objects, including instances and Classes, get the <tt>#lock_method_clear</tt> method.
@@ -65,14 +67,12 @@ module LockMethod
       define_method method_id do |*args1|
         options = options.merge(:args => args1)
         lock = ::LockMethod::Lock.new self, method_id, options
-        lock.call_and_lock original_method_id, *args1
+        lock.call_and_lock(*([original_method_id]+args1))
       end
     end
   end
 end
 
-unless ::Object.method_defined? :lock_method
-  ::Object.send :include, ::LockMethod::InstanceMethods
-  ::Class.send :include, ::LockMethod::ClassMethods
-  ::Module.extend ::LockMethod::ClassMethods
-end
+::Object.send :include, ::LockMethod::InstanceMethods
+::Class.send :include, ::LockMethod::ClassMethods
+::Module.send :include, ::LockMethod::ClassMethods

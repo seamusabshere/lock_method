@@ -1,28 +1,35 @@
-require 'singleton'
 require 'tmpdir'
 require 'fileutils'
-require 'thread'
+require 'digest/sha1'
+
 module LockMethod
   class DefaultStorageClient #:nodoc: all
-
-    include ::Singleton
-
     class Entry
       attr_reader :created_at
       attr_reader :ttl
       attr_reader :v
       def initialize(ttl, v)
-        @created_at = ::Time.now.to_f
-        @ttl = ttl
+        @created_at = ::Time.now
+        @ttl = ttl.to_f
         @v = v
       end
       def expired?
-        ttl.to_i > 0 and (::Time.now.to_f - created_at.to_f) > ttl.to_i
+        ttl > 0 and (::Time.now - created_at) > ttl
       end
     end
 
+    attr_reader :dir
+
+    def initialize
+      @mutex = ::Mutex.new
+      dir = ::File.expand_path ::File.join(::Dir.tmpdir, 'lock_method')
+      ::FileUtils.mkdir(dir) unless ::File.directory?(dir)
+      @dir = dir
+    end
+
     def get(k)
-      if ::File.exist?(path(k)) and entry = ::Marshal.load(::File.read(path(k))) and not entry.expired?
+      path = path k
+      if ::File.exist?(path) and (entry = ::Marshal.load(::File.read(path))) and not entry.expired?
         entry.v
       end
     rescue ::Errno::ENOENT
@@ -30,11 +37,10 @@ module LockMethod
   
     def set(k, v, ttl)
       entry = Entry.new ttl, v
-      semaphore.synchronize do
-        ::FileUtils.mkdir_p dir unless ::File.directory? dir
-        ::File.open(path(k), ::File::RDWR|::File::CREAT, :external_encoding => 'ASCII-8BIT') do |f|
+      @mutex.synchronize do
+        ::File.open(path(k), 'wb') do |f|
           f.flock ::File::LOCK_EX
-          f.write ::Marshal.dump(entry)
+          f.write ::Marshal.dump entry
         end
       end
     end
@@ -44,21 +50,15 @@ module LockMethod
     end
   
     def flush
-      ::FileUtils.rm_rf dir
+      ::Dir["#{dir}/*.lock"].each do |path|
+        ::FileUtils.rm_f path
+      end
     end
-  
+
     private
-  
-    def semaphore
-      @semaphore ||= ::Mutex.new
-    end
-  
+
     def path(k)
-      ::File.join dir, k
-    end
-  
-    def dir
-      ::File.expand_path ::File.join(::Dir.tmpdir, 'lock_method')
+      ::File.join dir, "#{::Digest::SHA1.hexdigest(k)}.lock"
     end
   end
 end

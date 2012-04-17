@@ -1,5 +1,5 @@
 require 'cache'
-require 'singleton'
+
 module LockMethod
   # Here's where you set config options.
   #
@@ -8,8 +8,10 @@ module LockMethod
   #
   # You'd probably put this in your Rails config/initializers, for example.
   class Config
-    include ::Singleton
-    
+    def initialize
+      @mutex = ::Mutex.new
+    end
+
     # Storage for keeping lockfiles.
     #
     # Defaults to using the filesystem's temp dir.
@@ -36,7 +38,9 @@ module LockMethod
     end
 
     def storage #:nodoc:
-      @storage ||= DefaultStorageClient.instance
+      @storage || @mutex.synchronize do
+        @storage ||= DefaultStorageClient.new
+      end
     end
     
     # TTL for method caches. Defaults to 24 hours.

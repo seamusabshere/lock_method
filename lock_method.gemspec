@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
-$:.push File.expand_path("../lib", __FILE__)
-require "lock_method/version"
+require File.expand_path('../lib/lock_method/version', __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "lock_method"
@@ -20,12 +19,4 @@ Gem::Specification.new do |s|
   
   s.add_runtime_dependency 'cache', '>=0.2.1'
   s.add_runtime_dependency 'activesupport'
-  s.add_development_dependency 'test-unit'
-  s.add_development_dependency 'memcached'
-  s.add_development_dependency 'redis'
-  if RUBY_VERSION >= '1.9'
-    s.add_development_dependency 'ruby-debug19'
-  else
-    s.add_development_dependency 'ruby-debug'
-  end
 end

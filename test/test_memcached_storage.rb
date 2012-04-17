@@ -1,10 +1,10 @@
 require 'helper'
 
-require 'memcached'
+require 'dalli'
 
 class TestMemcachedStorage < Test::Unit::TestCase
   def setup
-    my_cache = Memcached.new 'localhost:11211', :retry_timeout => 1, :server_failure_limit => 25
+    my_cache = Dalli::Client.new 'localhost:11211'
     my_cache.flush
     LockMethod.config.storage = my_cache
   end

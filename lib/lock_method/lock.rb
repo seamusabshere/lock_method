@@ -3,7 +3,7 @@ module LockMethod
   class Lock #:nodoc: all
     class << self
       def find(cache_key)
-        Config.instance.storage.get cache_key
+        LockMethod.config.storage.get cache_key
       end
       def klass_name(obj)
         (obj.is_a?(::Class) or obj.is_a?(::Module)) ? obj.to_s : obj.class.to_s
@@ -38,6 +38,7 @@ module LockMethod
     attr_reader :args
 
     def initialize(obj, method_id, options = {})
+      @mutex = ::Mutex.new
       @obj = obj
       @method_id = method_id
       options = options.symbolize_keys
@@ -55,23 +56,27 @@ module LockMethod
     end
     
     def ttl
-      @ttl ||= Config.instance.default_ttl
+      @ttl ||= LockMethod.config.default_ttl
     end
     
     def obj_digest
-      @obj_digest ||= ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(obj)))
+      @obj_digest || @mutex.synchronize do
+        @obj_digest ||= ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(obj)))
+      end
     end
 
     def args_digest
-      @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(args)))
+      @args_digest || @mutex.synchronize do
+        @args_digest ||= args.to_a.empty? ? 'empty' : ::Digest::SHA1.hexdigest(::Marshal.dump(Lock.resolve_lock(args)))
+      end
     end
         
     def delete
-      Config.instance.storage.delete cache_key
+      LockMethod.config.storage.delete cache_key
     end
     
     def save
-      Config.instance.storage.set cache_key, self, ttl
+      LockMethod.config.storage.set cache_key, self, ttl
     end
     
     def locked?
@@ -95,7 +100,7 @@ module LockMethod
     end
     
     def call_and_lock(*original_method_id_and_args)
-      until !spin? or !locked?
+      while locked? and spin?
         ::Kernel.sleep 0.5
       end
       if locked?
@@ -103,7 +108,7 @@ module LockMethod
       else
         begin
           save
-          obj.send *original_method_id_and_args
+          obj.send(*original_method_id_and_args)
         ensure
           delete
         end
