@@ -29,10 +29,13 @@ module LockMethod
 
     def get(k)
       path = path k
-      if ::File.exist?(path) and (entry = ::Marshal.load(::File.read(path))) and not entry.expired?
-        entry.v
+      @mutex.synchronize do
+        if ::File.exist?(path) and (entry = ::Marshal.load(::File.read(path))) and not entry.expired?
+          entry.v
+        end
       end
-    rescue ::Errno::ENOENT
+    rescue
+      $stderr.puts %{[lock_method] Rescued from #{$!.inspect} while trying to get a lock}
     end
   
     def set(k, v, ttl)
