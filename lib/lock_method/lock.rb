@@ -36,15 +36,19 @@ module LockMethod
     attr_reader :obj
     attr_reader :method_id
     attr_reader :args
+    attr_reader :blk
+    attr_reader :original_method_id
 
-    def initialize(obj, method_id, options = {})
+    def initialize(obj, method_id, options = {}, &blk)
       @mutex = ::Mutex.new
       @obj = obj
       @method_id = method_id
+      @blk = blk
       options = options.symbolize_keys
       @ttl = options[:ttl]
       @args = options[:args]
       @spin = options[:spin]
+      @original_method_id = options[:original_method_id]
     end
     
     def spin?
@@ -99,7 +103,7 @@ module LockMethod
       # nothing
     end
     
-    def call_and_lock(*original_method_id_and_args)
+    def call_and_lock
       while locked? and spin?
         ::Kernel.sleep 0.5
       end
@@ -108,7 +112,7 @@ module LockMethod
       else
         begin
           save
-          obj.send(*original_method_id_and_args)
+          obj.send(*([original_method_id]+args), &blk)
         ensure
           delete
         end

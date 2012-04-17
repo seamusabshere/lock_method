@@ -206,4 +206,26 @@ module SharedTests
     
     assert_equal 'danke schoen', BlogSpin.get_latest_entries
   end
+
+  def test_15_block
+    blocker = Thread.new do
+      BlogBlock.get_latest_entries { $stderr.write "i'm in the way!" }
+    end
+    
+    # give it a bit of time to lock
+    sleep 1
+    
+    # the blocker won't have finished
+    assert_raises(LockMethod::Locked) do
+      BlogBlock.get_latest_entries { $stderr.write "don't print me" }
+    end
+    
+    # wait to finish
+    blocker.join
+    
+    # now we're sure
+    assert_nothing_raised do
+      BlogBlock.get_latest_entries { $stderr.write "i'm now allowed" }
+    end
+  end
 end

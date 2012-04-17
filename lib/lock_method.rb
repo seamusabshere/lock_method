@@ -64,10 +64,10 @@ module LockMethod
       end
       original_method_id = "_unlocked_#{method_id}"
       alias_method original_method_id, method_id
-      define_method method_id do |*args1|
-        options = options.merge(:args => args1)
-        lock = ::LockMethod::Lock.new self, method_id, options
-        lock.call_and_lock(*([original_method_id]+args1))
+      define_method method_id do |*args1, &blk|
+        options1 = options.merge(:args => args1, :original_method_id => original_method_id)
+        lock = ::LockMethod::Lock.new self, method_id, options1, &blk
+        lock.call_and_lock
       end
     end
   end

@@ -81,6 +81,13 @@ module BlogSpin
   end
 end
 
-class Test::Unit::TestCase
-
+module BlogBlock
+  def self.get_latest_entries
+    sleep 2
+    yield
+    "i yielded"
+  end
+  class << self
+    lock_method :get_latest_entries
+  end
 end
