@@ -16,12 +16,50 @@ module LockMethod
   class Locked < ::StandardError
   end
 
-  MUTEX = ::Mutex.new
+  CONFIG_MUTEX = ::Mutex.new
 
   def LockMethod.config #:nodoc:
-    @config || MUTEX.synchronize do
+    @config || CONFIG_MUTEX.synchronize do
       @config ||= Config.new
     end
+  end
+
+  def LockMethod.original_method_id(method_id)
+    "_unlocked_#{method_id}"
+  end
+
+  def LockMethod.klass_name(obj)
+    (obj.is_a?(::Class) or obj.is_a?(::Module)) ? obj.to_s : obj.class.to_s
+  end
+
+  def LockMethod.method_delimiter(obj)
+    (obj.is_a?(::Class) or obj.is_a?(::Module)) ? '.' : '#'
+  end
+
+  def LockMethod.method_signature(obj, method_id)
+    [ klass_name(obj), method_id ].join method_delimiter(obj)
+  end
+
+  def LockMethod.resolve_lock(obj)
+    case obj
+    when ::Array
+      obj.map do |v|
+        resolve_lock v
+      end
+    when ::Hash
+      obj.inject({}) do |memo, (k, v)|
+        kk = resolve_lock k
+        vv = resolve_lock v
+        memo[kk] = vv
+        memo
+      end
+    else
+      obj.respond_to?(:as_lock) ? [obj.class.name, obj.as_lock] : obj
+    end
+  end
+
+  def LockMethod.digest(obj)
+    ::Digest::SHA1.hexdigest ::Marshal.dump(resolve_lock(obj))
   end
   
   # All Objects, including instances and Classes, get the <tt>#lock_method_clear</tt> method.
@@ -58,17 +96,16 @@ module LockMethod
     #       # lock_method :get_latest_entries, 800 #seconds
     #     end
     def lock_method(*args)
-      options = args.extract_options!
-      options = options.symbolize_keys
+      options = args.extract_options!.symbolize_keys
+      spin = options[:spin]
+      ttl = options[:ttl]
       method_id = args.first
       if args.last.is_a?(::Numeric)
-        options[:ttl] ||= args.last
+        ttl ||= args.last
       end
-      original_method_id = "_unlocked_#{method_id}"
-      alias_method original_method_id, method_id
-      define_method method_id do |*args1, &blk|
-        options1 = options.merge(:args => args1, :original_method_id => original_method_id)
-        lock = ::LockMethod::Lock.new self, method_id, options1, &blk
+      alias_method LockMethod.original_method_id(method_id), method_id
+      define_method method_id do |*my_args, &blk|
+        lock = ::LockMethod::Lock.new(self, method_id, my_args, ttl, spin, &blk)
         lock.call_and_lock
       end
     end

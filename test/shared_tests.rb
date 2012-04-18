@@ -159,8 +159,8 @@ module SharedTests
       Blog2.get_latest_entries2
     end
     
-    # but the lock expiry is 1 second, so by 1.2&change we're done
-    sleep 5
+    # but the lock expiry is 5 seconds, so by 5.2&change we're done
+    sleep 3.2
     assert_nothing_raised do
       Blog2.get_latest_entries2
     end

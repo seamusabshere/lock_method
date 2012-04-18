@@ -5,3 +5,4 @@ gemspec
 gem 'test-unit'
 gem 'dalli'
 gem 'redis'
+gem 'redis-namespace'

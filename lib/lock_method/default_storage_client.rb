@@ -8,7 +8,7 @@ module LockMethod
       attr_reader :created_at
       attr_reader :ttl
       attr_reader :v
-      def initialize(ttl, v)
+      def initialize(v, ttl)
         @created_at = ::Time.now
         @ttl = ttl.to_f
         @v = v
@@ -18,13 +18,11 @@ module LockMethod
       end
     end
 
-    attr_reader :dir
+    DIR = ::File.join ::Dir.tmpdir, 'lock_method'
 
     def initialize
       @mutex = ::Mutex.new
-      dir = ::File.expand_path ::File.join(::Dir.tmpdir, 'lock_method')
-      ::FileUtils.mkdir(dir) unless ::File.directory?(dir)
-      @dir = dir
+      ::FileUtils.mkdir(DIR) unless ::File.directory?(DIR)
     end
 
     def get(k)
@@ -39,7 +37,7 @@ module LockMethod
     end
   
     def set(k, v, ttl)
-      entry = Entry.new ttl, v
+      entry = Entry.new v, ttl
       @mutex.synchronize do
         ::File.open(path(k), 'wb') do |f|
           f.flock ::File::LOCK_EX
@@ -53,7 +51,7 @@ module LockMethod
     end
   
     def flush
-      ::Dir["#{dir}/*.lock"].each do |path|
+      ::Dir["#{DIR}/*.lock"].each do |path|
         ::FileUtils.rm_f path
       end
     end
@@ -61,7 +59,7 @@ module LockMethod
     private
 
     def path(k)
-      ::File.join dir, "#{::Digest::SHA1.hexdigest(k)}.lock"
+      ::File.join DIR, "#{::Digest::SHA1.hexdigest(k)}.lock"
     end
   end
 end
