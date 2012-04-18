@@ -43,7 +43,7 @@ module LockMethod
       @mutex.synchronize do
         ::File.open(path(k), 'wb') do |f|
           f.flock ::File::LOCK_EX
-          f.write ::Marshal.dump entry
+          f.write ::Marshal.dump(entry)
         end
       end
     end
