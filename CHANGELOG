@@ -1,3 +1,10 @@
+0.5.5 / 2012-05-09
+
+* Enhancements
+
+  * Provide a more helpful exception message that names the locked method
+  * A singleton doesn't need its own single-use mutex - just use Thread.exclusive
+
 0.5.4 / 2012-04-18
 
 * Enhancements
