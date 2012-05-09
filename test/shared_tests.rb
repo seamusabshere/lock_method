@@ -228,4 +228,20 @@ module SharedTests
       BlogBlock.get_latest_entries { $stderr.write "i'm now allowed" }
     end
   end
+
+  def test_016_gives_clear_exception_message
+    blocker = Thread.new { Blog2.get_latest_entries }
+  
+    # give it a bit of time to lock
+    sleep 1
+    
+    # the blocker won't have finished
+    exception = assert_raises(LockMethod::Locked) do
+      Blog2.get_latest_entries
+    end
+    assert_match /get_latest_entries/, exception.message
+  
+    # wait to finish
+    blocker.join
+  end
 end

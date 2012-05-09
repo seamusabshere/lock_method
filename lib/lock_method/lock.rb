@@ -49,7 +49,7 @@ module LockMethod
         ::Kernel.sleep 0.5
       end
       if locked?
-        raise Locked
+        raise Locked, %{#{method_signature} is currently locked.}
       else
         begin
           save
