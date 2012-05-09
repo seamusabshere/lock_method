@@ -16,10 +16,8 @@ module LockMethod
   class Locked < ::StandardError
   end
 
-  CONFIG_MUTEX = ::Mutex.new
-
   def LockMethod.config #:nodoc:
-    @config || CONFIG_MUTEX.synchronize do
+    @config || ::Thread.exclusive do
       @config ||= Config.new
     end
   end
